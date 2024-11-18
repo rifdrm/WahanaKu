@@ -12,10 +12,35 @@ user_data = {}
 tiket_terpesan = {"Komedi Putar": {}, "Rumah Hantu": {}, "Bianglala": {}}
 HARGA_VIP = 100000  
 
-def cek_kuota(terpesan, minggu):
-    """Cek apakah kuota tiket untuk wahana dan minggu tertentu tersedia."""
-    return len(terpesan.get(minggu, [])) < 50
+# === Fungsi untuk penyimpanan data ===
+def load_users():
+    """Membaca data pengguna dari file."""
+    try:
+        with open("users.txt", "r") as file:
+            for line in file:
+                username, password, saldo, vip, total_tiket = line.strip().split("|")
+                user_data[username] = {
+                    "password": password,
+                    "saldo": int(saldo),
+                    "vip": vip == "True",
+                    "total_tiket": int(total_tiket),
+                }
+    except FileNotFoundError:
+        pass
 
+def save_users():
+    """Menyimpan data pengguna ke file."""
+    with open("users.txt", "w") as file:
+        for username, data in user_data.items():
+            file.write(f"{username}|{data['password']}|{data['saldo']}|{data['vip']}|{data['total_tiket']}\n")
+
+def save_transaction(username, wahana, jumlah_tiket, total_harga):
+    """Menyimpan histori transaksi ke file."""
+    with open("transactions.txt", "a") as file:
+        waktu = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file.write(f"{waktu}|{username}|{wahana}|{jumlah_tiket}|{total_harga}\n")
+
+# === Fungsi login dan register ===
 def login():
     username = input("Masukkan username: ")
     if username in user_data:
@@ -32,33 +57,23 @@ def login():
 
 def register():
     username = input("Masukkan username baru: ")
+    if username in user_data:
+        print("Username sudah terdaftar.")
+        return None
     password = getpass.getpass("Masukkan password baru: ")
     user_data[username] = {
         "password": password,
-        "tiket": [],
-        "promo": True,
-        "ulasan": [],
-        "total_tiket": 0,  
-        "vip": False,       
-        "saldo": 0          
+        "saldo": 0,
+        "vip": False,
+        "total_tiket": 0,
     }
+    save_users()
     print("Pendaftaran berhasil.")
     return username
 
-def input_guest():
-    nama = input("Masukkan nama: ")
-    umur = int(input("Masukkan umur: "))
-    return nama, umur
-
-def top_up(username):
-    print("=== Top-Up Saldo ===")
-    bank_account = input("Masukkan nomor rekening Anda: ")
-    nominal = int(input("Masukkan nominal yang ingin di-top-up: "))
-    user_data[username]["saldo"] += nominal
-    print(f"Top-up berhasil! Saldo Anda sekarang: Rp {user_data[username]['saldo']:,}")
-
-def beli_tiket(username, nama_guest=None):
-    is_vip = user_data.get(username, {}).get("vip", False)
+# === Fungsi pembelian tiket ===
+def beli_tiket(username=None):
+    is_vip = user_data.get(username, {}).get("vip", False) if username else False
     if is_vip:
         print("Anda adalah pengguna VIP! Anda dapat memesan tiket tanpa batas waktu.")
     else:
@@ -68,56 +83,48 @@ def beli_tiket(username, nama_guest=None):
             hari_sabtu = hari_ini + datetime.timedelta(days=(5 - hari_ini.weekday()) % 7)
         else:
             hari_sabtu = hari_ini
+        minggu_ini = f"Minggu {hari_sabtu.isocalendar()[1]}"
 
-        nama_hari_sabtu = calendar.day_name[hari_sabtu.weekday()]  
-        nama_hari_sabtu = nama_hari_sabtu.capitalize()  
-        minggu_ini = f"{nama_hari_sabtu}, Minggu {hari_sabtu.isocalendar()[1]}"
-
-    # Memilih wahana
     print("Wahana yang tersedia:")
     for idx, w in enumerate(wahana.keys(), 1):
         print(f"{idx}. {w}")
 
-    if is_vip:
-        pilihan1 = int(input("Pilih wahana pertama (masukkan nomor): ")) - 1
-        wahana_pilihan1 = list(wahana.keys())[pilihan1]
-        pilihan2 = int(input("Pilih wahana kedua (masukkan nomor): ")) - 1
-        wahana_pilihan2 = list(wahana.keys())[pilihan2]
-    else:
-        pilihan = int(input("Pilih wahana (masukkan nomor): ")) - 1
-        wahana_pilihan1 = list(wahana.keys())[pilihan]
+    pilihan = int(input("Pilih wahana (masukkan nomor): ")) - 1
+    wahana_pilihan = list(wahana.keys())[pilihan]
 
     jumlah_tiket = int(input("Masukkan jumlah tiket: "))
     harga_per_tiket = 25000
-
-    # Hitung total harga
     total_harga = jumlah_tiket * harga_per_tiket
-    if user_data.get(username, {}).get("total_tiket", 0) > 50:
+
+    if username and user_data[username]["total_tiket"] > 50:
         total_harga *= 0.75
         print("Selamat! Anda mendapatkan diskon 25%.")
 
-    # Proses pemesanan tiket
-    for wahana_pilihan in ([wahana_pilihan1, wahana_pilihan2] if is_vip else [wahana_pilihan1]):
-        if jumlah_tiket + len(tiket_terpesan[wahana_pilihan].get(minggu_ini, [])) <= 50:
-            tiket_terpesan[wahana_pilihan].setdefault(minggu_ini, []).extend([username or nama_guest] * jumlah_tiket)
-            print(f"Tiket untuk {wahana_pilihan} berhasil dipesan sebanyak {jumlah_tiket} untuk {minggu_ini}.")
-        else:
-            print(f"Kuota untuk {wahana_pilihan} pada minggu ini penuh.")
+    if jumlah_tiket + len(tiket_terpesan[wahana_pilihan].get(minggu_ini, [])) <= 50:
+        tiket_terpesan[wahana_pilihan].setdefault(minggu_ini, []).extend([username or "Guest"] * jumlah_tiket)
+        print(f"Tiket untuk {wahana_pilihan} berhasil dipesan sebanyak {jumlah_tiket} untuk {minggu_ini}.")
+        save_transaction(username or "Guest", wahana_pilihan, jumlah_tiket, total_harga)
+    else:
+        print(f"Kuota untuk {wahana_pilihan} pada minggu ini penuh.")
 
-    # Potong saldo
     if username:
         if user_data[username]["saldo"] >= total_harga:
             user_data[username]["saldo"] -= total_harga
+            user_data[username]["total_tiket"] += jumlah_tiket
+            save_users()
             print(f"Total harga yang dibayar: Rp {total_harga:,.0f}")
             print(f"Sisa saldo Anda: Rp {user_data[username]['saldo']:,}")
         else:
             print("Saldo Anda tidak mencukupi. Silakan top-up terlebih dahulu.")
-    elif not username:
+    else:
         print(f"Total harga yang harus dibayar (Guest): Rp {total_harga:,}")
 
-    # Update poin royalti
-    if username:
-        user_data[username]["total_tiket"] += jumlah_tiket
+# === Fungsi lain (top-up, upgrade VIP, dll.) ===
+def top_up(username):
+    nominal = int(input("Masukkan nominal yang ingin di-top-up: "))
+    user_data[username]["saldo"] += nominal
+    save_users()
+    print(f"Top-up berhasil! Saldo Anda sekarang: Rp {user_data[username]['saldo']:,}")
 
 def upgrade_vip(username):
     if user_data[username]["vip"]:
@@ -125,56 +132,36 @@ def upgrade_vip(username):
     elif user_data[username]["saldo"] >= HARGA_VIP:
         user_data[username]["saldo"] -= HARGA_VIP
         user_data[username]["vip"] = True
+        save_users()
         print(f"Upgrade ke VIP berhasil! Saldo Anda sekarang: Rp {user_data[username]['saldo']:,}")
     else:
         print(f"Saldo Anda tidak mencukupi untuk upgrade VIP. Saldo Anda: Rp {user_data[username]['saldo']:,}")
+def lihat_histori(username=None):
+    """Menampilkan histori pembelian tiket."""
+    print("\n=== Histori Pembelian ===")
+    try:
+        with open("transactions.txt", "r") as file:
+            transactions = file.readlines()
+            if username:  
+                user_transactions = [t for t in transactions if f"|{username}|" in t]
+                if user_transactions:
+                    for t in user_transactions:
+                        print(t.strip())
+                else:
+                    print("Belum ada histori pembelian untuk akun ini.")
+            else:  
+                if transactions:
+                    for t in transactions:
+                        print(t.strip())
+                else:
+                    print("Belum ada histori pembelian.")
+    except FileNotFoundError:
+        print("Belum ada histori pembelian.")
+    input("Tekan Enter untuk Melanjutkan...")
 
-def menu_user(username):
-    while True:
-        print("\nMenu User:")
-        print("1. Beli Tiket")
-        print("2. Ulasan Wahana")
-        print("3. Cek Promo")
-        print("4. Cancel Tiket")
-        print("5. Lihat Ulasan")
-        print("6. Top-Up Saldo")
-        print("7. Upgrade VIP")
-        print("8. Logout")
-
-        pilihan = input("Pilih menu: ")
-
-        if pilihan == "1":
-            beli_tiket(username)
-        elif pilihan == "6":
-            top_up(username)
-        elif pilihan == "7":
-            upgrade_vip(username)
-        elif pilihan == "8":
-            print("Logout berhasil.")
-            break
-        else:
-            print("Pilihan tidak valid.")
-
-def menu_guest(nama, umur):
-    while True:
-        print("\nMenu Guest:")
-        print("1. Beli Tiket")
-        print("2. Lihat Ulasan")
-        print("3. Logout")
-
-        pilihan = input("Pilih menu: ")
-
-        if pilihan == "1":
-            beli_tiket(None, nama_guest=nama)
-        elif pilihan == "2":
-            lihat_ulasan()
-        elif pilihan == "3":
-            print("Terima kasih telah menggunakan aplikasi kami!")
-            break
-        else:
-            print("Pilihan tidak valid.")
-
+# === Menu Utama ===
 def main():
+    load_users()
     print("Selamat datang di Aplikasi Pembelian Tiket Wahana Pasar Malam!")
     while True:
         print("\nMenu Utama:")
@@ -188,13 +175,45 @@ def main():
         if pilihan == "1":
             username = login()
             if username:
-                menu_user(username)
+                while True:
+                    print("\nMenu User:")
+                    print("1. Beli Tiket")
+                    print("2. Top-Up Saldo")
+                    print("3. Upgrade VIP")
+                    print("4. Lihat Histori Pembelian")
+                    print("5. Logout")
+                    pilihan_user = input("Pilih menu: ")
+                    if pilihan_user == "1":
+                        beli_tiket(username)
+                    elif pilihan_user == "2":
+                        top_up(username)
+                    elif pilihan_user == "3":
+                        upgrade_vip(username)
+                    elif pilihan_user == "4":
+                        lihat_histori(username)
+                    elif pilihan_user == "5":
+                        print("Logout berhasil.")
+                        break
+                    else:
+                        print("Pilihan tidak valid.")
         elif pilihan == "2":
-            nama_guest, umur_guest = input_guest()
-            menu_guest(nama_guest, umur_guest)
+            while True:
+                print("\nMenu Guest:")
+                print("1. Beli Tiket")
+                print("2. Lihat Histori Pembelian")
+                print("3. Logout")
+                pilihan_guest = input("Pilih menu: ")
+                if pilihan_guest == "1":
+                    beli_tiket()
+                elif pilihan_guest == "2":
+                    lihat_histori()
+                elif pilihan_guest == "3":
+                    print("Terima kasih telah menggunakan aplikasi kami!")
+                    break
+                else:
+                    print("Pilihan tidak valid.")
         elif pilihan == "3":
-            username = register()
-            menu_user(username)
+            register()
         elif pilihan == "4":
             print("Terima kasih telah menggunakan aplikasi kami!")
             break
