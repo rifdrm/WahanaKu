@@ -74,38 +74,6 @@ def beli_tiket(username, nama_guest=None):
     else:
         print("Jumlah tiket melebihi kuota minggu ini.")
 
-def ulasan_wahana(username):
-    wahana_dipilih = input("Masukkan nama wahana yang ingin diulas: ")
-    ulasan = input("Tulis ulasan Anda: ")
-    user_data[username].setdefault("ulasan", []).append({wahana_dipilih: ulasan})
-    print("Ulasan berhasil disimpan.")
-
-def cek_promo(username):
-    if user_data[username]["promo"]:
-        print("Promo tersedia untuk user ini!")
-    else:
-        print("Tidak ada promo untuk user ini.")
-
-def cancel_tiket(username):
-    wahana_pilihan = input("Masukkan nama wahana yang tiketnya ingin dibatalkan: ")
-    minggu = input("Masukkan minggu pemesanan tiket: ")
-
-    if username in tiket_terpesan[wahana_pilihan].get(minggu, []):
-        tiket_terpesan[wahana_pilihan][minggu] = [user for user in tiket_terpesan[wahana_pilihan][minggu] if user != username]
-        print(f"Tiket untuk {wahana_pilihan} pada {minggu} berhasil dibatalkan.")
-    else:
-        print("Tidak ada tiket yang dipesan untuk minggu tersebut.")
-
-def lihat_ulasan():
-    print("Ulasan Wahana:")
-    for user, data in user_data.items():
-        if "ulasan" in data:
-            print(f"\nUlasan dari {user}:")
-            for ulasan in data["ulasan"]:
-                for wahana, review in ulasan.items():
-                    print(f"- {wahana}: {review}")
-    print("Selesai menampilkan ulasan.")
-
 def menu_user(username):
     while True:
         print("\nMenu User:")
@@ -120,14 +88,6 @@ def menu_user(username):
 
         if pilihan == "1":
             beli_tiket(username)
-        elif pilihan == "2":
-            ulasan_wahana(username)
-        elif pilihan == "3":
-            cek_promo(username)
-        elif pilihan == "4":
-            cancel_tiket(username)
-        elif pilihan == "5":
-            lihat_ulasan()
         elif pilihan == "6":
             print("Logout berhasil.")
             break
