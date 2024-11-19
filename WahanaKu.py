@@ -57,10 +57,16 @@ def login():
 
 def register():
     username = input("Masukkan username baru: ")
+    while not username.isalnum():
+        print("Username tidak boleh mengandung spasi atau kosong.")
+        username = input("Masukkan username baru: ")
     if username in user_data:
         print("Username sudah terdaftar.")
         return None
     password = getpass.getpass("Masukkan password baru: ")
+    while password is '':
+        print("Password harus diisi.")
+        password = getpass.getpass("Masukkan password baru: ")
     user_data[username] = {
         "password": password,
         "saldo": 0,
