@@ -2,7 +2,7 @@
 # Kabirudevalzah Koharu (J0404241114)
 # Muhammad Arif Darmawan (J0404241134)
 
-
+import os
 import datetime
 import getpass
 
@@ -15,10 +15,14 @@ wahana = {
 user_data = {}
 tiket_terpesan = {"Kora-Kora": {}, "Rumah Hantu": {}, "Bianglala": {}}
 HARGA_VIP = 100000  
+def close():
+    os.system('cls')
+
 
 # === Fungsi untuk penyimpanan data ===
 def load_users():
     """Membaca data pengguna dari file."""
+    close()
     try:
         with open("users.txt", "r") as file:
             for line in file:
@@ -35,6 +39,7 @@ def load_users():
 
 def save_users():
     """Menyimpan data pengguna ke file."""
+    close()
     with open("users.txt", "w") as file:
         for username, data in user_data.items():
             file.write(f"{username}|{data['password']}|{data['saldo']}|{data['vip']}|{data['total_tiket']}\n")
@@ -42,6 +47,7 @@ def save_users():
 
 def save_transaction(username, wahana, jumlah_tiket, total_harga):
     """Menyimpan histori transaksi ke file."""
+    close()
     with open("transactions.txt", "a") as file:
         waktu = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         file.write(f"{waktu}|{username}|{wahana}|{jumlah_tiket}|{total_harga}\n")
@@ -56,6 +62,7 @@ def login():
     :returns: username jika login berhasil, atau None jika gagal
     """
 
+    close()
     username = input("Masukkan username: ")
     if username in user_data:
         password = getpass.getpass("Masukkan password: ")
@@ -77,6 +84,7 @@ def register():
     Jika berhasil, maka akan menyimpan data pengguna ke file dan
     mengembalikan username yang berhasil didaftarkan."""
     
+    close()
     username = input("Masukkan username baru: ")
     while not username.islower() or ' ' in username or not username.isalnum():
         print("Username harus menggunakan huruf kecil, tanpa spasi, dan alfanumerik.")
@@ -120,6 +128,7 @@ def beli_tiket(username=None):
     - Menyimpan data pengguna dan histori transaksi ke file.
     """
     
+    close()
     is_vip = user_data.get(username, {}).get("vip", False) if username else False
     minggu_ini = None 
     
@@ -183,6 +192,7 @@ def beli_tiket(username=None):
 # === Fungsi Lihat Ulasan Pengguna ===
 def lihat_ulasan():
     """Menampilkan ulasan pengguna dan memungkinkan penambahan ulasan baru."""
+    close()
     print("\n=== Ulasan Pengguna ===")
     try:
         with open("reviews.txt", "r") as file:
@@ -207,6 +217,7 @@ def lihat_ulasan():
 
 def tambah_ulasan():
     """Menambahkan ulasan baru ke file reviews.txt."""
+    close()
     ulasan = input("Masukkan ulasan Anda: ")
     with open("reviews.txt", "a") as file:
         file.write(f"{ulasan}\n")
@@ -230,6 +241,7 @@ def top_up(username):
     - Menyimpan data pengguna setelah top-up.
     - Menampilkan pesan keberhasilan dan saldo terkini.
     """
+    close()
     nominal = int(input("Masukkan nominal yang ingin di-top-up: "))
     user_data[username]["saldo"] += nominal
     save_users()
@@ -253,6 +265,7 @@ def upgrade_vip(username):
     - Menyimpan data pengguna setelah upgrade.
     - Menampilkan pesan keberhasilan dan saldo terkini.
     """
+    close()
     if user_data[username]["vip"]:
         print("Anda sudah menjadi pengguna VIP.")
     else:
@@ -274,6 +287,7 @@ def upgrade_vip(username):
 # === Fungsi cancel tiket ===
 def cancel_tiket(username):
     """Membatalkan tiket terakhir yang dibeli oleh pengguna."""
+    close()
     try:
         with open("transactions.txt", "r") as file:
             transactions = file.readlines()
@@ -313,6 +327,7 @@ def cancel_tiket(username):
 def lihat_histori(username=None):
     """Menampilkan histori pembelian tiket."""
     print("\n=== Histori Pembelian ===")
+    close()
     try:
         with open("transactions.txt", "r") as file:
             transactions = file.readlines()
@@ -343,6 +358,7 @@ def lihat_histori(username=None):
 
 # === Fungsi ganti password ===
 def ganti_password(username):
+    close()
     while True:  # Loop sampai pengguna berhasil mengubah password
         password_lama = getpass.getpass("Masukkan password lama: ")
         
@@ -371,6 +387,7 @@ def lihat_saldo(username):
     - Memeriksa apakah pengguna terdaftar.
     - Menampilkan saldo pengguna yang terkini.
     """
+    close()
     if username in user_data:
         print(f"Saldo Anda saat ini: Rp {user_data[username]['saldo']:,.2f}")
     else:
@@ -388,7 +405,7 @@ def main():
     menampilkan form pendaftaran. Jika memilih Keluar, maka
     akan keluar dari aplikasi.
     """
-
+    close()
     load_users()
     print("Selamat datang di Aplikasi Pembelian Tiket Wahana Pasar Malam!")
     while True:
