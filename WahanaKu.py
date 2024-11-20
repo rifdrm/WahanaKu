@@ -186,6 +186,9 @@ def beli_tiket(username=None):
             print("Saldo Anda tidak mencukupi. Silakan top-up terlebih dahulu.")
     else:
         print(f"Total harga yang harus dibayar (Guest): Rp {total_harga:,.2f}")
+        print("Silakan transfer ke rekening kami:")
+        print("A/n Wahana Pasar Malam (9876543210)")
+        input("Tekan Enter jika sudah melakukan transfer...")
 
 # ===========================================================================
 
